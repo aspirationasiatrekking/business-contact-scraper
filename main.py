@@ -3,10 +3,26 @@ from search.serper_provider import SerperSearchProvider
 from search.ddgs_provider import DDGSSearchProvider
 from scraper.website import scrape_website
 from search.result_classifier import classify_result
+from exporters.excel_exporter import export_to_excel
 
 
 def main():
     query = input("Enter your search query: ").strip()
+    max_results_input = input(
+    "Maximum search results (default 10): "
+    ).strip()
+
+    try:
+        max_results = int(max_results_input) if max_results_input else 10
+
+        if max_results <= 0:
+            print("Please enter a number greater than 0.")
+            return
+    except ValueError:
+        print("Please enter a valid number.")
+        return
+
+
 
     if not query:
         print("Search query cannot be empty.")
@@ -19,7 +35,10 @@ def main():
     )
 
     # Search for businesses
-    results = search_provider.search(query, max_results=10)
+    results = search_provider.search(
+    query,
+    max_results=max_results
+    )
 
     print(f"\nFound {len(results)} search results")
 
@@ -65,7 +84,10 @@ def main():
         print("\nTitle:", company.get("title"))
         print("Website:", company.get("website"))
         print("Emails:", company.get("emails"))
-
+        print("Phone numbers:", company.get("phone_numbers"))
+        print("Nepal phone numbers:", company.get("nepal_phone_numbers"))
+        
+    export_to_excel(companies)
 
 if __name__ == "__main__":
     main()

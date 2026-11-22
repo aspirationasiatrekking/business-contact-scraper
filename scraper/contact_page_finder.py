@@ -1,3 +1,4 @@
+
 from urllib.parse import urljoin, urlparse
 
 
@@ -5,6 +6,9 @@ CONTACT_KEYWORDS = {
     "contact",
     "contact-us",
     "contactus",
+}
+
+ABOUT_KEYWORDS = {
     "about",
     "about-us",
     "aboutus",
@@ -14,25 +18,37 @@ CONTACT_KEYWORDS = {
 def find_contact_pages(soup, base_url):
 
     contact_pages = []
+    about_pages = []
 
     links = soup.select("a[href]")
+
+    base_domain = urlparse(base_url).netloc.lower()
 
     for link in links:
 
         href = link.get("href")
-        text = link.get_text(" ", strip=True).lower()
 
         if not href:
             continue
 
-        combined_text = f"{text} {href.lower()}"
+        full_url = urljoin(base_url, href)
 
-        if any(keyword in combined_text for keyword in CONTACT_KEYWORDS):
+        parsed_url = urlparse(full_url)
 
-            full_url = urljoin(base_url, href)
+        # Ignore external websites
+        if parsed_url.netloc.lower() != base_domain:
+            continue
 
-            # Keep links within the same website
-            if urlparse(full_url).netloc == urlparse(base_url).netloc:
-                contact_pages.append(full_url)
+        # Ignore fragments and query parameters
+        path = parsed_url.path.strip("/").lower()
 
-    return list(dict.fromkeys(contact_pages))
+        
+
+        if path in CONTACT_KEYWORDS:
+            contact_pages.append(full_url)
+
+        elif path in ABOUT_KEYWORDS:
+            about_pages.append(full_url)
+
+    # Contact pages should be visited before about pages
+    return list(dict.fromkeys(contact_pages + about_pages))
