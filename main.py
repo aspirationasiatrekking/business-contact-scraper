@@ -1,69 +1,58 @@
-
-import requests
-from bs4 import BeautifulSoup
-from ddgs import DDGS
-
-def search_web(query):
-    with DDGS(timeout=30) as search:
-        return search.text(query, max_results=10)
-
-def scrape_website(url):
-    try:
-        response = requests.get(
-            url,
-            timeout=15,
-            headers={"User-Agent": "Mozilla/5.0"}
-        )
-
-        response.raise_for_status()
-
-        soup = BeautifulSoup(response.content, "html.parser")
-
-        title = (
-            soup.title.get_text(strip=True)
-            if soup.title else "No title found"
-        )
-
-        text_content = soup.get_text(
-            separator="\n",
-            strip=True
-        )
-
-        return {
-            "website": url,
-            "title": title,
-            "text": text_content[:500]
-        }
-
-    except requests.RequestException as error:
-        print(f"Failed: {url} - {error}")
-        return None
+from search.manager import SearchManager
+from search.serper_provider import SerperSearchProvider
+from search.ddgs_provider import DDGSSearchProvider
+from scraper.website import scrape_website
 
 
-query = input("Enter your search query: ")
+def main():
+    query = input("Enter your search query: ").strip()
 
-results = search_web(query)
+    if not query:
+        print("Search query cannot be empty.")
+        return
 
-print(f"\nFound {len(results)} search results")
+    # Initialize search provider
+    search_provider = DDGSSearchProvider()
 
-companies = []
+    # Search for businesses
+    results = search_provider.search(query, max_results=10)
 
-for result in results:
-    url = result.get("href")
+    print(f"\nFound {len(results)} search results")
 
-    if not url:
-        continue
+    companies = []
+    failed_websites = []
 
-    print(f"\nScraping: {url}")
+    for result in results:
 
-    data = scrape_website(url)
+        # SearchResult is a dataclass, so use dot notation
+        url = result.url
 
-    if data:
-        companies.append(data)
+        if not url:
+            continue
 
-print(f"\nSuccessfully scraped {len(companies)} websites")
+        print(f"\nScraping: {url}")
 
-for company in companies:
-    print("\nTitle:", company["title"])
-    print("Website:", company["website"])
-    print("Text:", company["text"][:200])
+        try:
+            data = scrape_website(url)
+
+            if data:
+                companies.append(data)
+            else:
+                failed_websites.append(url)
+
+        except Exception as error:
+            print(f"Failed: {url} | {error}")
+            failed_websites.append(url)
+
+    print("\n========== SUMMARY ==========")
+    print(f"Successfully scraped: {len(companies)}")
+    print(f"Failed websites: {len(failed_websites)}")
+
+    for company in companies:
+        print("\nTitle:", company.get("title"))
+        print("Website:", company.get("website"))
+        print("Emails:", company.get("emails"))
+
+
+if __name__ == "__main__":
+    main()
