@@ -81,11 +81,11 @@ def main():
     print(f"Failed websites: {len(failed_websites)}")
 
     for company in companies:
-        print("\nTitle:", company.get("title"))
-        print("Website:", company.get("website"))
-        print("Emails:", company.get("emails"))
-        print("Phone numbers:", company.get("phone_numbers"))
-        print("Nepal phone numbers:", company.get("nepal_phone_numbers"))
+        print("\nTitle:", company.name)
+        print("Website:", company.website)
+        print("Emails:", company.emails)
+        print("Phone numbers:", company.phone_numbers)
+        print("Nepal phone numbers:", company.nepal_phone_numbers)
         
     export_to_excel(companies)
 

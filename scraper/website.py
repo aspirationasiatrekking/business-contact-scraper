@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 from extractors.phone_extractor import extract_phone_numbers, is_nepal_phone_number
 from extractors.contacts import extract_emails, extract_mailto_emails
 from scraper.contact_page_finder import find_contact_pages
-
+from models.business import Business
 
 def scrape_website(url):
     try:
@@ -89,14 +89,14 @@ def scrape_website(url):
 ]
 
         # 7. Return extracted information
-        return {
-            "website": response.url,
-            "title": title,
-            "text": text_content[:500],
-            "emails": emails,
-            "phone_numbers": phone_numbers,
-            "nepal_phone_numbers": nepal_phone_numbers
-        }
+        return Business(
+            name=title,
+            website=response.url,
+            emails=emails,
+            phone_numbers=phone_numbers,
+            nepal_phone_numbers=nepal_phone_numbers,
+            extraction_status="scraped"
+        )
 
     except requests.RequestException as error:
         print(f"Failed: {url} - {error}")

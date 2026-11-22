@@ -1,6 +1,6 @@
 
 from pathlib import Path
-
+from dataclasses import asdict
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.utils import get_column_letter
@@ -41,13 +41,15 @@ def export_to_excel(companies):
     # Add business records
     for company in companies:
 
+        company_data = asdict(company)
+
         worksheet.append([
-            company.get("title", ""),
-            company.get("website", ""),
-            ", ".join(company.get("emails", [])),
-            ", ".join(company.get("phone_numbers", [])),
-            ", ".join(company.get("nepal_phone_numbers", [])),
-            "Scraped successfully"
+            company_data.get("name", ""),
+            company_data.get("website", ""),
+            ", ".join(company_data.get("emails", [])),
+            ", ".join(company_data.get("phone_numbers", [])),
+            ", ".join(company_data.get("nepal_phone_numbers", [])),
+            company_data.get("extraction_status", "")
         ])
 
         # Make website clickable
