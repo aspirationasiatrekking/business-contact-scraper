@@ -2,6 +2,7 @@ from search.manager import SearchManager
 from search.serper_provider import SerperSearchProvider
 from search.ddgs_provider import DDGSSearchProvider
 from scraper.website import scrape_website
+from search.result_classifier import classify_result
 
 
 def main():
@@ -12,7 +13,10 @@ def main():
         return
 
     # Initialize search provider
-    search_provider = DDGSSearchProvider()
+    search_provider = SearchManager(
+        primary_provider=SerperSearchProvider(),
+        fallback_provider=DDGSSearchProvider()
+    )
 
     # Search for businesses
     results = search_provider.search(query, max_results=10)
@@ -23,6 +27,15 @@ def main():
     failed_websites = []
 
     for result in results:
+        category = classify_result(result)
+
+        print(f"\nCategory: {category}")
+        print(f"Title: {result.title}")
+
+    # For now, scrape only likely business websites
+        if category != "business":
+            print("Skipping non-business result.")
+            continue
 
         # SearchResult is a dataclass, so use dot notation
         url = result.url
