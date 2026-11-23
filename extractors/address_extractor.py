@@ -1,7 +1,7 @@
 
 import json
 
-
+from geotext import GeoText
 
 
 def find_address_data(data, business_name=None):
@@ -77,11 +77,49 @@ def extract_address(soup, business_name=None):
         if isinstance(country, dict):
             country = country.get("name", "")
 
+        address = address_data.get("streetAddress", "")
+
+        city = address_data.get("addressLocality", "")
+        state_province = address_data.get("addressRegion", "")
+
+        # Fallback: identify missing city and country from address text
+        if address:
+
+            places = GeoText(address)
+
+            if not city and places.cities:
+                city = places.cities[0]
+
+            if not country and places.countries:
+                country = places.countries[0]
+
         return {
-            "address": address_data.get("streetAddress", ""),
-            "city": address_data.get("addressLocality", ""),
-            "state_province": address_data.get("addressRegion", ""),
-            "country": country
+            "address": address,
+            "city": city,
+            "state_province": state_province,
+            "country": country,
+
+            "address_source": (
+                "json_ld"
+                if address
+                else ""
+            ),
+
+            "city_source": (
+                "json_ld"
+                if address_data.get("addressLocality")
+                else "geotext"
+                if city
+                else ""
+            ),
+
+            "country_source": (
+                "json_ld"
+                if address_data.get("addressCountry")
+                else "geotext"
+                if country
+                else ""
+            )
         }
 
     return None

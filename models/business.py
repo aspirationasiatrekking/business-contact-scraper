@@ -22,3 +22,6 @@ class Business:
     contact_page_urls: list[str] = field(default_factory=list)
 
     extraction_status: str = "pending"
+    address_source: str = ""
+    city_source: str = ""
+    country_source: str = ""

@@ -1,3 +1,5 @@
+from unittest import result
+
 from search.manager import SearchManager
 from search.serper_provider import SerperSearchProvider
 from search.ddgs_provider import DDGSSearchProvider
@@ -50,6 +52,8 @@ def main():
 
         print(f"\nCategory: {category}")
         print(f"Title: {result.title}")
+        print(f"URL: {result.url}")
+        print(f"Snippet: {result.snippet}")
 
     # For now, scrape only likely business websites
         if category != "business":
@@ -65,7 +69,7 @@ def main():
         print(f"\nScraping: {url}")
 
         try:
-            data = scrape_website(url)
+            data = scrape_website(url,category=category)
 
             if data:
                 companies.append(data)
@@ -84,6 +88,7 @@ def main():
         print("\nTitle:", company.name)
         print("Website:", company.website)
         print("Emails:", company.emails)
+        print("Category:", company.category)
         print("Phone numbers:", company.phone_numbers)
         print("Address:", company.address)
         print("City:", company.city)

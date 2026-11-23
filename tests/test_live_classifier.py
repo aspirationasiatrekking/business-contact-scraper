@@ -16,3 +16,4 @@ for result in results:
     print(f"\nTitle: {result.title}")
     print(f"Category: {category}")
     print(f"URL: {result.url}")
+    print(f"Snippet: {result.snippet}")
