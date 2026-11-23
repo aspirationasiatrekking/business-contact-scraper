@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 
 from extractors.address_extractor import extract_address
 from extractors.business_name import extract_business_name
+from extractors.business_category import extract_business_category
 from extractors.phone_extractor import extract_phone_numbers
 from extractors.contacts import extract_emails, extract_mailto_emails
 
@@ -32,6 +33,9 @@ def scrape_website(url, category=""):
         business_name = extract_business_name(soup)
 
         print(f"Extracted business name: {business_name}")
+
+        # Prefer the website's declared business type over search-result text.
+        page_category = extract_business_category(soup) or category
 
         # 3. Extract homepage address
         address_data = extract_address(
@@ -146,7 +150,7 @@ def scrape_website(url, category=""):
         return Business(
             name=business_name,
             website=response.url,
-            category=category,
+            category=page_category,
 
             emails=emails,
             phone_numbers=phone_numbers,

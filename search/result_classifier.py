@@ -2,70 +2,70 @@
 from urllib.parse import urlparse
 
 
-# Known directory platforms
 DIRECTORY_DOMAINS = {
     "tourradar.com",
     "tripadvisor.com",
 }
 
-
-# Known association domains
 ASSOCIATION_DOMAINS = {
     "taan.org.np",
     "taanpokhara.org",
 }
 
+NON_BUSINESS_DOMAINS = {
+    "youtube.com",
+    "youtu.be",
+    "vimeo.com",
+    "tiktok.com",
+    "facebook.com",
+    "instagram.com",
+    "linkedin.com",
+    "reddit.com",
+}
 
-# URL paths that commonly indicate articles
-ARTICLE_PATHS = {
+ARTICLE_PATHS = (
     "/blog/",
     "/news/",
     "/articles/",
     "/article/",
-}
+)
 
-
-# Article and informational page keywords
-ARTICLE_KEYWORDS = {
+# Strong signals that a result is an informational article.
+ARTICLE_PHRASES = {
     "how to",
-    "guide",
-    "tips",
     "everything you need to know",
     "why you should",
-    "best routes",
-    "trekking routes",
-    "complete-list",
-    "complete list",
+    "complete guide",
+    "beginner's guide",
+    "beginners guide",
+    "top 10",
+    "top 15",
+    "top 20",
     "list of trekking companies",
     "best trekking companies",
     "top trekking companies",
-    "companies in pokhara",
-    "agency in pokhara 2025",
+    "best routes",
+    "trekking routes",
 }
 
-
-# Directory keywords
-DIRECTORY_KEYWORDS = {
-    "directory",
-    "list-of-companies",
+DIRECTORY_PHRASES = {
+    "business directory",
+    "company directory",
     "company listings",
     "business listings",
+    "list of companies",
+    "directory of",
 }
 
-
-# Association keywords
-ASSOCIATION_KEYWORDS = {
-    "association",
+ASSOCIATION_PHRASES = {
     "trekking agencies association",
     "tourism association",
     "members association",
-    "federation",
+    "federation of",
 }
 
-
-# Business keywords
-# Avoid generic words such as "trekking" alone.
-BUSINESS_KEYWORDS = {
+# Strong evidence that a website represents a relevant business.
+BUSINESS_PHRASES = {
     "trekking company",
     "trekking agency",
     "trekking experts",
@@ -86,18 +86,42 @@ BUSINESS_KEYWORDS = {
     "outdoor adventure",
     "guided tours",
     "travel services",
-    "hiking team",
-    "trekking team",
-    "adventure team",
-    "travel experts",
-        "nepali agency",
-    "local agency",
     "trekking and tours",
     "treks and tours",
     "tourism company",
     "tourism agency",
     "travel operator",
     "tour company",
+}
+
+# Supporting evidence. These words alone are not enough.
+SERVICE_WORDS = {
+    "trekking",
+    "hiking",
+    "expedition",
+    "adventure",
+    "mountaineering",
+    "climbing",
+    "tours",
+    "travel",
+}
+
+BUSINESS_CONTEXT_WORDS = {
+    "book",
+    "booking",
+    "trips",
+    "holidays",
+    "itineraries",
+    "destinations",
+    "guided",
+    "organize",
+    "organised",
+    "organized",
+    "operator",
+    "agency",
+    "company",
+    "team",
+    "experiences",
 }
 
 
@@ -109,70 +133,100 @@ def matches_domain(domain, known_domains):
     )
 
 
+def contains_phrase(text, phrases):
+
+    return any(
+        phrase in text
+        for phrase in phrases
+    )
+
+
 def classify_result(result):
 
-    url = (result.url or "").lower()
-    title = (result.title or "").lower()
-    snippet = (result.snippet or "").lower()
+    url = (result.url or "").strip().lower()
+    title = (result.title or "").strip().lower()
+    snippet = (result.snippet or "").strip().lower()
 
     parsed_url = urlparse(url)
 
-    domain = parsed_url.netloc.lower()
-    domain = domain.removeprefix("www.")
-
+    domain = parsed_url.netloc.lower().removeprefix("www.")
     url_path = parsed_url.path.lower()
 
-    # Combine searchable text
-    page_text = f"{title} {snippet}"
+    if matches_domain(domain, NON_BUSINESS_DOMAINS):
+        return "unknown"
 
-    # 1. Check known associations
+    # 1. Known associations
     if matches_domain(domain, ASSOCIATION_DOMAINS):
         return "association"
 
-    if any(
-        keyword in page_text
-        for keyword in ASSOCIATION_KEYWORDS
+    if contains_phrase(
+        title,
+        ASSOCIATION_PHRASES
     ):
         return "association"
 
-    # 2. Check known directory platforms
+    # 2. Known directory platforms
     if matches_domain(domain, DIRECTORY_DOMAINS):
         return "directory"
 
-    if any(
-        keyword in title
-        for keyword in DIRECTORY_KEYWORDS
+    if contains_phrase(
+        title,
+        DIRECTORY_PHRASES
     ):
         return "directory"
 
-    # 3. Check article URL patterns
-    if any(
-        path in url_path
-        for path in ARTICLE_PATHS
-    ):
+    # 3. Strong article URL signals
+    if any(path in url_path for path in ARTICLE_PATHS):
         return "article"
 
-    # 4. Check article keywords in URL path
-    if any(
-        keyword.replace(" ", "-") in url_path
-        or keyword.replace(" ", "") in url_path
-        for keyword in ARTICLE_KEYWORDS
-    ):
+    # 4. Strong article title signals
+    if contains_phrase(title, ARTICLE_PHRASES):
         return "article"
 
-    # 5. Check article keywords in title
-    if any(
-        keyword in title
-        for keyword in ARTICLE_KEYWORDS
-    ):
-        return "article"
+    # 5. Score business evidence
+    score = 0
 
-    # 6. Check business keywords
-    if any(
-        keyword in page_text
-        for keyword in BUSINESS_KEYWORDS
-    ):
+    # Strong business phrases in the title
+    if contains_phrase(title, BUSINESS_PHRASES):
+        score += 3
+
+    # Business phrases in the snippet
+    if contains_phrase(snippet, BUSINESS_PHRASES):
+        score += 2
+
+    # Supporting evidence in the title
+    title_has_service = any(
+        word in title
+        for word in SERVICE_WORDS
+    )
+
+    title_has_business_context = any(
+        word in title
+        for word in BUSINESS_CONTEXT_WORDS
+    )
+
+    if title_has_service:
+        score += 1
+
+    if title_has_business_context:
+        score += 1
+
+    # Supporting evidence in the snippet
+    snippet_has_service = any(
+        word in snippet
+        for word in SERVICE_WORDS
+    )
+
+    snippet_has_business_context = any(
+        word in snippet
+        for word in BUSINESS_CONTEXT_WORDS
+    )
+
+    if snippet_has_service and snippet_has_business_context:
+        score += 1
+
+    # 6. Decide whether this is a potential business candidate
+    if score >= 2:
         return "business"
 
-    # 7. No matching category
     return "unknown"

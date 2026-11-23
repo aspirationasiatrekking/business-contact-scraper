@@ -10,6 +10,41 @@ BUSINESS_SCHEMA_TYPES = {
     "touristinformationcenter",
 }
 
+NON_BUSINESS_SCHEMA_TYPES = {
+    "article",
+    "person",
+    "postaladdress",
+    "thing",
+    "webpage",
+    "website",
+}
+
+
+def schema_types(data):
+
+    schema_type = data.get("@type", [])
+
+    if isinstance(schema_type, str):
+        schema_type = [schema_type]
+
+    return {
+        item.rstrip("/").split("/")[-1].lower()
+        for item in schema_type
+        if isinstance(item, str)
+    }
+
+
+def is_business_schema_entity(data):
+
+    types = schema_types(data)
+    if types.intersection(BUSINESS_SCHEMA_TYPES):
+        return True
+
+    has_contact_data = bool({"address", "telephone", "email"}.intersection(data))
+    return has_contact_data and (
+        not types or bool(types - NON_BUSINESS_SCHEMA_TYPES)
+    )
+
 
 def find_schema_business_name(data):
 
@@ -23,18 +58,7 @@ def find_schema_business_name(data):
 
     elif isinstance(data, dict):
 
-        schema_type = data.get("@type", [])
-
-        if isinstance(schema_type, str):
-            schema_type = [schema_type]
-
-        normalized_types = {
-            item.rstrip("/").split("/")[-1].lower()
-            for item in schema_type
-            if isinstance(item, str)
-        }
-
-        if normalized_types.intersection(BUSINESS_SCHEMA_TYPES):
+        if is_business_schema_entity(data):
 
             name = data.get("name")
 
@@ -49,6 +73,46 @@ def find_schema_business_name(data):
 
                 if name:
                     return name
+
+    return None
+
+
+def extract_microdata_name(soup):
+
+    business_scopes = soup.find_all(
+        attrs={"itemscope": True, "itemtype": True}
+    )
+
+    for scope in business_scopes:
+        item_type = scope.get("itemtype", "")
+        if not isinstance(item_type, str):
+            continue
+
+        schema_type = item_type.rstrip("/").split("/")[-1].lower()
+        has_contact_property = scope.find(
+            attrs={"itemprop": lambda value: value and
+                   {"address", "telephone", "email"}.intersection(
+                       value.split()
+                   )}
+        )
+        if (
+            schema_type not in BUSINESS_SCHEMA_TYPES
+            and (
+                schema_type in NON_BUSINESS_SCHEMA_TYPES
+                or not has_contact_property
+            )
+        ):
+            continue
+
+        name_element = scope.find(
+            attrs={"itemprop": lambda value: value and "name" in value.split()}
+        )
+        if name_element:
+            name = name_element.get("content") or name_element.get_text(
+                strip=True
+            )
+            if name:
+                return html.unescape(name.strip())
 
     return None
 
@@ -86,7 +150,25 @@ def extract_business_name(soup):
         if name:
             return html.unescape(name).strip()
 
-    # 3. Fallback to HTML title
+    # 3. Try Schema.org microdata
+    name = extract_microdata_name(soup)
+
+    if name:
+        return name
+
+    # 4. Try standard application metadata
+    application_name = soup.find(
+        "meta",
+        attrs={"name": "application-name"}
+    )
+
+    if application_name:
+        name = application_name.get("content", "").strip()
+
+        if name:
+            return html.unescape(name).strip()
+
+    # 5. Fallback to HTML title
     if soup.title:
         title = soup.title.get_text(strip=True)
 
