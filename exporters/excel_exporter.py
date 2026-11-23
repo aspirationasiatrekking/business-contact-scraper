@@ -11,7 +11,7 @@ def export_to_excel(companies):
     output_dir = Path("output")
     output_dir.mkdir(exist_ok=True)
 
-    file_path = output_dir / "nepal_business_leads.xlsx"
+    file_path = output_dir / "global_business_leads.xlsx"
 
     workbook = Workbook()
     worksheet = workbook.active
@@ -21,8 +21,7 @@ def export_to_excel(companies):
         "Business Name",
         "Website",
         "Email Addresses",
-        "All Phone Numbers",
-        "Nepal Phone Numbers",
+        "Phone Numbers",
         "Extraction Status"
     ]
 
@@ -48,7 +47,6 @@ def export_to_excel(companies):
             company_data.get("website", ""),
             ", ".join(company_data.get("emails", [])),
             ", ".join(company_data.get("phone_numbers", [])),
-            ", ".join(company_data.get("nepal_phone_numbers", [])),
             company_data.get("extraction_status", "")
         ])
 
@@ -68,9 +66,8 @@ def export_to_excel(companies):
         "B": 45,
         "C": 40,
         "D": 45,
-        "E": 35,
-        "F": 25
-    }
+        "E": 25
+}   
 
     for column, width in column_widths.items():
         worksheet.column_dimensions[column].width = width

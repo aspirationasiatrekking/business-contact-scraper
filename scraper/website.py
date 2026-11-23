@@ -1,7 +1,7 @@
-
+from extractors.address_extractor import extract_address
 import requests
 from bs4 import BeautifulSoup
-from extractors.phone_extractor import extract_phone_numbers, is_nepal_phone_number
+from extractors.phone_extractor import extract_phone_numbers
 from extractors.contacts import extract_emails, extract_mailto_emails
 from scraper.contact_page_finder import find_contact_pages
 from models.business import Business
@@ -18,6 +18,7 @@ def scrape_website(url):
         response.raise_for_status()
 
         soup = BeautifulSoup(response.content, "html.parser")
+        address_data = extract_address(soup) or {}
 
         # 2. Extract website title
         title = (
@@ -83,10 +84,7 @@ def scrape_website(url):
         # 6. Remove duplicate emails
         emails = list(dict.fromkeys(emails))
         phone_numbers = list(dict.fromkeys(phone_numbers))  
-        nepal_phone_numbers = [
-        number for number in phone_numbers
-        if is_nepal_phone_number(number)
-]
+   
 
         # 7. Return extracted information
         return Business(
@@ -94,9 +92,13 @@ def scrape_website(url):
             website=response.url,
             emails=emails,
             phone_numbers=phone_numbers,
-            nepal_phone_numbers=nepal_phone_numbers,
+            address=address_data.get("address", ""),
+            city=address_data.get("city", ""),
+            state_province=address_data.get("state_province", ""),
+            country=address_data.get("country", ""),
             extraction_status="scraped"
-        )
+        )   
+
 
     except requests.RequestException as error:
         print(f"Failed: {url} - {error}")

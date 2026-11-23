@@ -85,7 +85,10 @@ def main():
         print("Website:", company.website)
         print("Emails:", company.emails)
         print("Phone numbers:", company.phone_numbers)
-        print("Nepal phone numbers:", company.nepal_phone_numbers)
+        print("Address:", company.address)
+        print("City:", company.city)
+        print("State/Province:", company.state_province)
+        print("Country:", company.country)
         
     export_to_excel(companies)
 

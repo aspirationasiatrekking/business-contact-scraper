@@ -1,3 +1,4 @@
+
 from urllib.parse import urlparse
 
 
@@ -7,17 +8,60 @@ DIRECTORY_DOMAINS = {
     "taan.org.np",
 }
 
+
 ARTICLE_KEYWORDS = {
-    "how-to",
-    "best-trekking-companies",
+    "how to",
+    "guide",
+    "tips",
+    "everything you need to know",
+    "why you should",
+    "top 10",
+    "top 5",
+    "top 20",
+    "best routes",
+    "trekking routes",
     "complete-list",
-    "top-10",
+    "complete list",
+    "list of trekking companies",
+    "best trekking companies",
+    "top trekking companies",
 }
+
 
 DIRECTORY_KEYWORDS = {
     "members",
     "directory",
     "list-of-companies",
+}
+
+
+BUSINESS_KEYWORDS = {
+    "trekking",
+    "trekking company",
+    "trekking agency",
+    "trekking experts",
+    "trekking services",
+    "tour operator",
+    "tour operators",
+    "travel agency",
+    "travel company",
+    "adventure company",
+    "adventure travel",
+    "adventure tours",
+    "hiking company",
+    "hiking tours",
+    "expedition",
+    "mountaineering",
+    "mountain climbing",
+    "peak climbing",
+    "outdoor adventure",
+    "guided tours",
+    "travel services",
+    "hiking team",
+    "trekking team",
+    "adventure team",
+    "expedition company",
+    "travel experts",
 }
 
 
@@ -30,37 +74,34 @@ def classify_result(result):
     domain = urlparse(url).netloc.lower()
     domain = domain.removeprefix("www.")
 
-    # Check known directory platforms
-    if any(domain == item or domain.endswith("." + item)
-           for item in DIRECTORY_DOMAINS):
+    # 1. Check known directory platforms
+    if any(
+        domain == item or domain.endswith("." + item)
+        for item in DIRECTORY_DOMAINS
+    ):
         return "directory"
 
-    # Check article URL patterns
-    if any(keyword in url for keyword in ARTICLE_KEYWORDS):
+    # 2. Check article URL patterns
+    # Check article URL paths, not domain names
+    url_path = urlparse(url).path.lower()
+
+    if any(keyword in url_path for keyword in ARTICLE_KEYWORDS):
         return "article"
 
-    # Check directory-related keywords
+    # 3. Check directory-related title keywords
     if any(keyword in title for keyword in DIRECTORY_KEYWORDS):
         return "directory"
 
-    # Check for informational articles
-    if any(keyword in title for keyword in {"how to", "guide", "tips"}):
+    # 4. Check article title patterns
+    if any(keyword in title for keyword in ARTICLE_KEYWORDS):
         return "article"
 
-    business_keywords = {
-    "trekking company",
-    "trekking agency",
-    "trekking experts",
-    "trekking services",
-    "tour operator",
-    "hiking company",
-    "trekking in nepal",
-    "trekking in kathmandu",
-    "trekking in pokhara",
-   }
-
-    if any(keyword in title or keyword in snippet
-           for keyword in business_keywords):
+    # 5. Check business keywords
+    if any(
+        keyword in title or keyword in snippet
+        for keyword in BUSINESS_KEYWORDS
+    ):
         return "business"
 
+    # 6. No matching category
     return "unknown"

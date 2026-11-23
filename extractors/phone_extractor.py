@@ -1,11 +1,15 @@
+
 import phonenumbers
 
 
-def extract_phone_numbers(text):
+def extract_phone_numbers(text, default_region=None):
 
     numbers = []
 
-    for match in phonenumbers.PhoneNumberMatcher(text, "NP"):
+    for match in phonenumbers.PhoneNumberMatcher(
+        text,
+        default_region
+    ):
 
         number = match.number
 
@@ -19,17 +23,3 @@ def extract_phone_numbers(text):
             numbers.append(formatted_number)
 
     return list(dict.fromkeys(numbers))
-
-
-def is_nepal_phone_number(number):
-
-    try:
-        parsed_number = phonenumbers.parse(number, "NP")
-
-        return (
-            phonenumbers.is_valid_number(parsed_number)
-            and phonenumbers.region_code_for_number(parsed_number) == "NP"
-        )
-
-    except phonenumbers.NumberParseException:
-        return False
