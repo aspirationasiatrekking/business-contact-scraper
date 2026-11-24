@@ -45,6 +45,7 @@ class SerperSearchProvider(SearchProvider):
                 "q": query,
                 "num": page_size,
                 "page": page,
+                "gl": "np",
                 "hl": "en"
             }
 

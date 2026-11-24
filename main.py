@@ -10,7 +10,6 @@ from exporters.excel_exporter import export_to_excel
 
 def main():
     query = input("Enter your search query: ").strip()
-    country = input("Enter the country to search in: ").strip()
     max_results_input = input(
     "Maximum search results (default 10): "
     ).strip()
@@ -31,10 +30,6 @@ def main():
         print("Search query cannot be empty.")
         return
 
-    if not country:
-        print("Country cannot be empty.")
-        return
-
     # Initialize search provider
     search_provider = SearchManager(
         primary_provider=SerperSearchProvider(),
@@ -43,7 +38,7 @@ def main():
 
     # Search for businesses
     results = search_provider.search(
-    f"{query} in {country}",
+    query,
     max_results=max_results
     )
 
@@ -60,8 +55,9 @@ def main():
         print(f"URL: {result.url}")
         print(f"Snippet: {result.snippet}")
 
+    # For now, scrape only likely business websites
         if category != "business":
-            print("Skipping result that is not classified as a business.")
+            print("Skipping non-business result.")
             continue
 
         # SearchResult is a dataclass, so use dot notation

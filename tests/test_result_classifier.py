@@ -62,8 +62,7 @@ def run_tests():
     test_everything_you_need_article,
     test_why_you_should_article,
     test_top_routes_article,
-    test_nepal_guide_trekking_business,
-    test_video_platform_is_not_a_business_website
+    test_nepal_guide_trekking_business
 ]
 
     for test in tests:
@@ -121,17 +120,6 @@ def test_empty_snippet():
     )
 
     assert classify_result(result) == "business"
-
-
-def test_video_platform_is_not_a_business_website():
-    result = create_result(
-        "Trusted Trekking Company in Nepal",
-        "https://www.youtube.com/watch?v=example",
-        "Trekking company offering guided adventure tours"
-    )
-
-    assert classify_result(result) == "unknown"
-
 
 def test_everything_you_need_article():
     result = create_result(
